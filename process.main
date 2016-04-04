@@ -1,0 +1,74 @@
+#!/bin/bash -e
+
+cp $1/SBM.top ./
+cp $1/SBM.gro ./
+cp $2 ./
+echo q > paraq
+echo "make_ndx_46 -f SBM.gro"
+make_ndx_46 -f SBM.gro < paraq 2>/dev/null > /dev/null
+
+echo 5 > para
+echo "editconf_46 -f SBM.gro -n index.ndx -o SBM_MC.pdb"
+editconf_46 -f SBM.gro -n index.ndx -o SBM_MC.pdb < para \
+2>/dev/null > /dev/null
+echo "removing non-coordinate information from SBM_MC.pdb"
+sed -i '' '/MODEL/d' SBM_MC.pdb 
+sed -i '' '/CRYST/d' SBM_MC.pdb
+sed -i '' '/TITLE/d' SBM_MC.pdb
+sed -i '' '/REMARK/d' SBM_MC.pdb
+
+echo "generating index mapping between SBM_MC.pdb and model pdbs"
+samplePDB=$(echo $(find ../ -name "*.pdb" -maxdepth 1) \
+| awk -NF "[/.]+" '{print $2}')".pdb"
+extraAtom=$(python2.7 ./process.main.map.py SBM_MC.pdb "../"$samplePDB)
+
+echo "removing sidechain-involved pair interactions from SBM.top"
+sed '/\[ pairs \]/,$!d' SBM.top | sed '/\[ b/,$d' | sed -e '1,2d' > target.top
+sed -i '' '$ d' ./target.top
+sed -i '' '/ '"$extraAtom"' /d' ./target.top
+sed '/\[ SideChain \]/,$!d' index.ndx | sed -e '1d' | \
+sed '/SideChain/,$d' > SC.log
+awk '{ for(i = 1; i <= NF; i++) { print "sed -i \x27\x27 \x27/ "$i\
+" /d\x27 ./target.top" } }' SC.log > removeSC 
+chmod +x removeSC && ./removeSC
+
+echo "generating pair interactions in Gaussian form"
+./process.main.LJ2Gauss target.top > targetGauss.top
+echo "using index mapping to obtain the atom indexes in the shadow map"
+python2.7 ./process.main.trans.py targetGauss.top TR2T0
+awk '{printf"%6d   %6d\n", $1, $2}' targetGauss.topTR2T0 > shadowMap.log
+
+echo "processing the model at the beginning of the simulation"
+cp SBM.gro start.gro
+make_ndx_46 -f start.gro -o index_strt.ndx < paraq 2>/dev/null > /dev/null
+editconf_46 -f start.gro -n index_strt.ndx -o start.pdb < para \
+2>/dev/null > /dev/null
+
+echo 6 > parap
+echo 1 >> parap
+echo "processing the native model (optional)"
+echo "pdb2gmx_46 -f $2 -missing -ignh -o nat.pdb"
+pdb2gmx_46 -f $2 -missing -ignh -o nat.pdb < parap \
+2>/dev/null > /dev/null
+rm topol.top
+rm posre.itp  
+echo "make_ndx_46 -f nat.pdb -o index_nat.ndx"
+make_ndx_46 -f nat.pdb -o index_nat.ndx < paraq 2>/dev/null > /dev/null
+echo "editconf_46 -f nat.pdb -n index_nat.ndx -o native.pdb"
+editconf_46 -f nat.pdb -n index_nat.ndx -o native.pdb < para \
+2>/dev/null > /dev/null
+rm nat.pdb
+
+echo "using the shadow map to get atom pair distances in the native model"
+genPairStat -s native.pdb -n shadowMap.log -o native.log -f native.pdb \
+2>/dev/null > /dev/null
+echo "using the shadow map to get atom pair distances in the initial model"
+genPairStat -s native.pdb -n shadowMap.log -o start.log -f start.pdb \
+2>/dev/null > /dev/null
+
+rm para
+rm paraq
+rm parap
+echo "*************************"
+echo process.main EXITS NORMALLY
+echo "*************************"

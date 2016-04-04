@@ -1,0 +1,89 @@
+#!/bin/bash -e
+
+scriptROOT=$PWD
+cd ../ 
+
+if [ -d temp ]; then
+  if [ -d temp.old ]; then
+    /bin/rm -r -f temp.old
+  fi
+  
+  mv temp temp.old
+fi
+mkdir temp
+
+ROOT=$PWD
+sysNumber=$(echo $ROOT | awk -F "/" '{print $NF}')
+ensembleFile=$(ls *.tar.gz)
+natStrucFile=$(ls T0*.pdb)
+refStrucFile=TR$sysNumber.pdb
+
+cd temp 
+mkdir makeAMBER && cd makeAMBER
+  cp $scriptROOT/makeAMBER ./
+  cp $scriptROOT/mdps/*.mdp ./
+  cp $ROOT/$refStrucFile ./
+  ./makeAMBER $refStrucFile
+cd ../
+
+mkdir makeSBM && cd makeSBM
+  cp $scriptROOT/makeSBM ./
+  cp $scriptROOT/makeSBM.py ./
+  ./makeSBM TR$sysNumber
+cd ../
+
+cp $ROOT/$ensembleFile ./ && tar xzf $ensembleFile && rm *.tar.gz
+cd $(echo $ensembleFile | awk -F "." '{print $1}')
+mkdir pdbs && cd pdbs
+   cp $scriptROOT/makeEnsemble ./
+   cp $scriptROOT/makeEnsemble1.py ./
+   cp $scriptROOT/makeEnsemble2.py ./
+   ./makeEnsemble $ROOT/$refStrucFile
+
+   mkdir processMain && cd processMain
+      processFolder=$PWD
+      startLog=$processFolder/start.log
+      cp $scriptROOT/process.main ./
+      cp $scriptROOT/process.main.LJ2Gauss ./
+      cp $scriptROOT/process.main.map.py ./
+      cp $scriptROOT/process.main.trans.py ./
+      ./process.main $ROOT/temp/makeSBM/SBM $ROOT/$natStrucFile
+    cd ../
+
+mkdir rmsd && cd rmsd
+    cp $scriptROOT/makeRMSD ./
+    ./makeRMSD
+    cd ../
+
+    mkdir res && cd res
+      cp $scriptROOT/process.res ./
+      ./process.res
+      mkdir his && cd his
+        cp $scriptROOT/process.his ./
+        ./process.his
+        mkdir graph && cd graph
+          cd $scriptROOT/process.graph ./
+          ./process.graph $startLog
+          mkdir data && cd data
+            cp $scriptROOT/process.data ./
+            cp $scriptROOT/process.data.py ./
+            ./process.data $startLog
+            mkdir pngs && cd pngs
+              cp $scriptROOT/process.pngs ./
+              cp $scriptROOT/process.pngs.main.py ./
+              cp $scriptROOT/process.pngs.minimizer.py ./
+              ./process.pngs $startLog
+              cp Result $processFolder
+            cd ../
+          cd ../
+        cd ../
+      cd ../
+    cd ../
+
+    cd $processFolder
+      cp $scriptROOT/produceResult ./
+      ./produceResult
+    cd ../
+
+  cd ../
+cd ../

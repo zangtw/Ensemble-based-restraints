@@ -1,0 +1,59 @@
+#!/bin/bash -e
+
+fileName=$(echo $1 | awk -F "[-.]" '{print $1}')
+
+echo 6 > para
+echo 1 >> para
+echo pdb2gmx_46 -f $1 -ignh -missing -o $fileName.gro
+chargeNumber=$(pdb2gmx_46 -f $1 -ignh -missing -o $fileName.gro < para \
+2>/dev/null > /dev/null | grep "Total charge" | tee /dev/tty \
+| awk -F "[ .]" '{print $3}')
+rm para
+
+echo editconf_46 -f $fileName.gro -o $fileName.gro -c -d 1.0 -bt dodecahedron
+editconf_46 -f $fileName.gro -o $fileName.gro -c -d 1.0 -bt dodecahedron \
+2>/dev/null >/dev/null
+
+echo genbox_46 -cp $fileName.gro -cs spc216.gro -o $fileName.gro -p topol.top
+genbox_46 -cp $fileName.gro -cs spc216.gro -o $fileName.gro -p topol.top \
+2>/dev/null >/dev/null
+  
+if (( chargeNumber != 0 )); then
+  echo grompp_46 -f ions.mdp -o ions.tpr -c $fileName.gro -p topol.top
+  grompp_46 -f ions.mdp -o ions.tpr -c $fileName.gro -p topol.top
+  echo 13 > para
+
+  if (( chargeNumber > 0)); then
+    echo genion_46 -s ions.tpr -o $fileName.gro -p topol.top -nname CL \
+    -nn $chargeNumber
+    genion_46 -s ions.tpr -o $fileName.gro -p topol.top -nname CL \
+    -nn $chargeNumber < para 2>/dev/null >/dev/null
+  else
+    echo genion_46 -s ions.tpr -o $fileName.gro -p topol.top -pname NA \
+    -np $chargeNumber
+    genion_46 -s ions.tpr -o $fileName.gro -p topol.top -pname NA \
+    -np $chargeNumber < para 2>/dev/null >/dev/null
+  fi
+
+  rm para
+fi
+
+echo grompp_46 -f minim.mdp -c $fileName.gro -p topol.top -o em.tpr
+grompp_46 -f minim.mdp -c $fileName.gro -p topol.top -o em.tpr \
+2>/dev/null >/dev/null
+
+echo "****************************************"
+echo PERFORM ENERGY MINIMIZATION IN 2 SECONDS
+echo "****************************************"
+sleep 2
+#mdrun_46 -deffnm em -v
+#mv em.gro $fileName.gro
+
+echo grompp_46 -f AMBER.mdp -c $fileName.gro -p topol.top -o AMBER.tpr
+grompp_46 -f AMBER.mdp -c $fileName.gro -p topol.top -o AMBER.tpr \
+2>/dev/null >/dev/null
+
+rm *#
+echo "*************************"
+echo makeAMBER EXITS NORMALLY
+echo "*************************"

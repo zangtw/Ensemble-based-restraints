@@ -1,0 +1,20 @@
+#!/bin/bash -e
+
+RESULT=$(python2.7 makeEnsemble1.py $1)
+indexL=$(echo $RESULT | awk '{print $1}')
+indexR=$(echo $RESULT | awk '{print $2}')
+
+fileList=$(find ../ -name "T0*" -maxdepth 1)
+totFileNum=$(echo "$fileList" | wc -l)
+
+i=0
+for f in $fileList
+do 
+  i=$((i+1))
+  python2.7 makeEnsemble2.py $f $indexL $indexR $i $totFileNum 2>/dev/null
+done
+
+echo ""
+echo "****************************"
+echo makeEnsemble EXITS NORMALLY
+echo "****************************"

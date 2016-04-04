@@ -1,0 +1,8 @@
+#!/bin/bash
+
+awk '{
+mu = ($5 * 2 / $4) ^ (1/6);  
+h = $5 / mu^12;
+sigma = mu * 0.2 / ( 2 * log(2) ) ^ (1/2);
+print $1, $2, 3, mu, sigma, h;
+}' $1

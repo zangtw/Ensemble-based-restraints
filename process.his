@@ -1,0 +1,38 @@
+#!/bin/bash -e
+
+totNum=$(find ../ -name "*.pdb.log" -maxdepth 1 | wc -l)
+i=0
+
+for f in $(find ../ -maxdepth 1 -name "*.pdb.log" -maxdepth 1)
+do
+  while read line
+  do 
+    i1=$(echo "$line" | awk '{print $1}')
+    size1=${#i1}
+    i2=$(echo "$line" | awk '{print $2}')
+    size2=${#i2}
+   
+    filenm=""
+    if ((size1 < 3));
+    then
+      filenm=$filenm"0"
+    fi
+    filenm=$filenm$i1
+    if ((size2 < 3));
+    then
+      filenm=$filenm"0"
+    fi
+    filenm=$filenm$i2
+
+    echo "$line" | awk '{print $3}' >> $filenm
+  
+  done < "$f"
+    
+  i=$((i+1))
+  printf '\r'$i"/%d is finished." $totNum
+done 
+
+printf '\n'
+echo "*************************"
+echo process.his EXITS NORMALLY
+echo "*************************"

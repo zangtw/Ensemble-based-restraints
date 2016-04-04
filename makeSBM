@@ -1,0 +1,56 @@
+#!/bin/bash -e
+
+GroFile=$1.gro
+GroFile_noH=$1_noH.gro
+GroFile_noH_pbc=$1_noH_pbc.gro
+PDBFile_noH_pbc=$1_noH_pbc.pdb
+
+cp ../makeAMBER/$GroFile ./
+cp ../makeAMBER/AMBER.tpr ./
+
+echo q > para
+echo make_ndx_46 -f $GroFile
+make_ndx_46 -f $GroFile < para 2>/dev/null > /dev/null
+rm para
+
+echo 2 > para
+echo editconf_46 -f $GroFile -n index.ndx -o $GroFile_noH
+editconf_46 -f $GroFile -n index.ndx -o $1_noH.gro < para \
+2>/dev/null > /dev/null
+
+echo trjconv_46 -s AMBER.tpr -f $GroFile -n index.ndx -o $GroFile_noH_pbc
+trjconv_46 -s AMBER.tpr -f $GroFile -n index.ndx -o $GroFile_noH_pbc \
+-ur compact -pbc mol < para 2>/dev/null > /dev/null
+rm para
+
+echo editconf_46 -f $GroFile_noH_pbc -o $PDBFile_noH_pbc
+editconf_46 -f $GroFile_noH_pbc -o $PDBFile_noH_pbc 2>/dev/null > /dev/null 
+sed -i '' '/MODEL/d' $PDBFile_noH_pbc 
+sed -i '' '/CRYST/d' $PDBFile_noH_pbc  
+sed -i '' '/REMARK/d' $PDBFile_noH_pbc 
+sed -i '' '/TITLE/d' $PDBFile_noH_pbc 
+sed -i '' '/TER/d' $PDBFile_noH_pbc 
+sed -i '' 's/ENDMDL/END/g' $PDBFile_noH_pbc
+python2.7 ./makeSBM.py $PDBFile_noH_pbc
+tar xzf mark*
+rm *.tar.gz
+mv mark* SBM
+
+cd SBM
+  cp mark.*.top SBM.top
+
+  awk 'NR>3 {print l} {l=$0}' mark*.gro > temp1
+  awk 'NR>3 {print l} {l=$0}' ../$GroFile_noH > temp2
+  NumOfAtoms=$(awk 'NR==2 {print}' mark*.gro)
+  echo "GRO File" > SBM.gro
+  echo "    "$NumOfAtoms >> SBM.gro
+  awk 'FNR==NR{a[NR]=$4;next}{$5=a[FNR]}  \
+  {printf"%5d  %3s %4s%5d%8.3f%8.3f%8.3f\n", $1, $2, $3, $4, $5, $6, $7}' \
+  temp2 temp1 >> SBM.gro
+  echo "10.00000   10.00000   10.00000" >> SBM.gro
+  rm temp*
+cd ../
+
+echo "*************************"
+echo makeSBM EXITS NORMALLY
+echo "*************************"

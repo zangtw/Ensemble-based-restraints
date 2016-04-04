@@ -1,0 +1,24 @@
+#!/bin/bash -e
+
+totNum=$(find ../ -name "*.pdb" -maxdepth 1 | wc -l)
+i=0
+
+echo 3 > para
+echo 3 >> para
+for f in $(find ../ -name "*.pdb" -maxdepth 1)
+do 
+  prefix=$(echo $f | awk -NF "[/]+" '{print $2}')
+  g_rms_46 -f $f -s ../processMain/native.pdb -o rmsd$prefix".xvg" < para \
+2>/dev/null > /dev/null
+  
+  i=$((i+1))
+  printf '\r'$i"/%d is finished." $totNum
+done
+
+rm para
+
+cat *.xvg >> combine
+sed -i '' '/@/d' combine
+sed -i '' '/#/d' combine
+cat combine | sort -k 2 | awk '{print NR, $2}' > temp
+mv temp combine
