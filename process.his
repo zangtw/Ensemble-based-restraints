@@ -13,17 +13,35 @@ do
     size2=${#i2}
    
     filenm=""
-    if ((size1 < 3));
+
+    if ((size1 == 1))
+    then
+      filenm=$filenm"000"
+    elif ((size1 == 2))
+    then
+      filenm=$filenm"00"
+    elif ((size1 == 3))
     then
       filenm=$filenm"0"
+    else
+      filenm=$filenm
     fi
     filenm=$filenm$i1
-    if ((size2 < 3));
+    
+    if ((size2 == 1))
+    then
+      filenm=$filenm"000"
+    elif ((size2 == 2))
+    then
+      filenm=$filenm"00"
+    elif ((size2 == 3))
     then
       filenm=$filenm"0"
+    else
+      filenm=$filenm
     fi
     filenm=$filenm$i2
-
+    
     echo "$line" | awk '{print $3}' >> $filenm
   
   done < "$f"

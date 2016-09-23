@@ -38,6 +38,7 @@ mv mark* SBM
 
 cd SBM
   cp mark.*.top SBM.top
+  cp mark.*.gro SBM_original.gro
 
   awk 'NR>3 {print l} {l=$0}' mark*.gro > temp1
   awk 'NR>3 {print l} {l=$0}' ../$GroFile_noH > temp2

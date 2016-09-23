@@ -1,5 +1,15 @@
 #!/bin/bash -e
 
-awk '{printf"%3d   %3d   %d  %7.6f   %7.6f   %7.6f\n", $1, $2, $3, $4, $5, $6}' Result > ResultFinal
-s=$(awk 'BEGIN{sum=0}{sum+=$6}END{print sum/NR}' ResultFinal)
-awk -v var="$s" '{print $6/var*0.528591}' ResultFinal > newGaussHeight
+sed 's/./&   /4' Result > ResultFinal1
+awk '{printf"%3d   %3d   3  %7.6f   %7.6f   %7.6f\n", $1, $2, $3, $4, $5}' ResultFinal1 > ResultFinal2
+s=$(awk 'BEGIN{sum=0}{sum+=$6}END{print sum/NR}' ResultFinal2)
+awk -v var="$s" '{print $6/var*0.528591}' ResultFinal2 > newGaussHeight
+awk 'FNR==NR{a[NR]=$1;next}{$6=a[FNR]}1' newGaussHeight ResultFinal2 > ResultFinal3
+awk '{printf"%3d   %3d   %d  %7.6f   %7.6f   %7.6f\n", $1, $2, $3, $4, $5, $6}' ResultFinal3 > ResultFinal4
+python process.main.trans.py ResultFinal4 T02TR
+awk '{if ($5 > 0.001) print $0}' ResultFinal4T02TR > ResultFinal
+rm ResultFinal1
+rm ResultFinal2
+rm ResultFinal3
+rm ResultFinal4
+rm ResultFinal4T02TR

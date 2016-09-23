@@ -50,10 +50,10 @@ mkdir pdbs && cd pdbs
       ./process.main $ROOT/temp/makeSBM/SBM $ROOT/$natStrucFile
     cd ../
 
-mkdir rmsd && cd rmsd
-    cp $scriptROOT/makeRMSD ./
-    ./makeRMSD
-    cd ../
+#mkdir rmsd && cd rmsd
+#    cp $scriptROOT/makeRMSD ./
+#    ./makeRMSD
+#    cd ../
 
     mkdir res && cd res
       cp $scriptROOT/process.res ./
@@ -62,7 +62,7 @@ mkdir rmsd && cd rmsd
         cp $scriptROOT/process.his ./
         ./process.his
         mkdir graph && cd graph
-          cd $scriptROOT/process.graph ./
+          cp $scriptROOT/process.graph ./
           ./process.graph $startLog
           mkdir data && cd data
             cp $scriptROOT/process.data ./

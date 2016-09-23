@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
 cp $1/SBM.top ./
-cp $1/SBM.gro ./
+cp $1/SBM_original.gro ./SBM.gro
 cp $2 ./
 echo q > paraq
 echo "make_ndx_46 -f SBM.gro"

@@ -47,11 +47,8 @@ x = np.arange(min(data[0]), max(data[0]), (max(data[0]) - min(data[0]))/200)
 y = 0
 resultFile = open("Result", "a")
 for i in range(0, peakNumber):
-    y += res['sol'][i] * np.exp(- (x - data[0][peakIndex[i]])**2 \
-        / res['sol'][i + peakNumber])
-    resultFile.write('%-6s   %7.6f   %7.6f   %7.6f\n' % \
-        (sys.argv[1][3:], data[0][peakIndex[i]], \
-         np.sqrt(0.5 * res['sol'][i + peakNumber]), -res['sol'][i]))
+    y += res['sol'][i] * np.exp(- (x - data[0][peakIndex[i]])**2 / res['sol'][i + peakNumber])
+    resultFile.write('%-6s   %7.6f   %7.6f   %7.6f\n' % (sys.argv[1][3:], data[0][peakIndex[i]], np.sqrt(0.5 * res['sol'][i + peakNumber]), -res['sol'][i]))
 plt.plot(x,y)
 resultFile.close()
 

@@ -46,8 +46,8 @@ echo "****************************************"
 echo PERFORM ENERGY MINIMIZATION IN 2 SECONDS
 echo "****************************************"
 sleep 2
-#mdrun_46 -deffnm em -v
-#mv em.gro $fileName.gro
+mdrun_46 -deffnm em -v
+mv em.gro $fileName.gro
 
 echo grompp_46 -f AMBER.mdp -c $fileName.gro -p topol.top -o AMBER.tpr
 grompp_46 -f AMBER.mdp -c $fileName.gro -p topol.top -o AMBER.tpr \
